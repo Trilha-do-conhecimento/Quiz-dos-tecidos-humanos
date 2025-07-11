@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Tecidos Humanos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-option:hover {
+            background-color: #f0f9ff; /* light-blue-50 */
+        }
+        .quiz-option.selected {
+            border-color: #2563eb; /* blue-600 */
+            background-color: #dbeafe; /* blue-100 */
+        }
+        .correct-answer {
+            background-color: #dcfce7; /* green-100 */
+        }
+        .incorrect-answer {
+            background-color: #fee2e2; /* red-100 */
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8">
+
+    <div id="quiz-app" class="bg-white p-6 md:p-8 rounded-xl shadow-lg max-w-2xl w-full mx-4 transition-all duration-300">
+
+        <!-- Start Screen -->
+        <div id="start-screen">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 text-center">Quiz sobre Tecidos Humanos</h1>
+            <p class="text-gray-600 text-center mb-6">Teste seus conhecimentos! A cada rodada, 5 perguntas aleatórias de um total de 50 serão selecionadas. Clique no botão abaixo para começar.</p>
+            <button id="start-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Iniciar Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div id="progress-bar" class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div id="progress-bar-inner" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="question-counter" class="text-sm text-gray-500 mb-2"></p>
+            <h2 id="question-text" class="text-xl font-semibold text-gray-700 mb-4"></h2>
+            <div id="options-container" class="space-y-3"></div>
+            <div id="quiz-feedback" class="mt-4 text-red-500 text-sm hidden">Por favor, selecione uma opção.</div>
+            <button id="next-btn" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Próxima Pergunta
+            </button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 text-center">Resultados</h2>
+            <p id="score-text" class="text-center text-xl font-bold mb-6"></p>
+            <div id="results-summary" class="space-y-4 max-h-96 overflow-y-auto pr-2"></div>
+            <button id="retry-btn" class="w-full mt-8 bg-gray-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                Jogar Novamente
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // CORREÇÃO: Adicionado um event listener para garantir que o DOM esteja totalmente carregado antes de executar o script.
+        // Isso evita erros onde o script tenta encontrar elementos (como botões) que ainda não foram renderizados na página.
+        window.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultsScreen = document.getElementById('results-screen');
+
+            const startBtn = document.getElementById('start-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const retryBtn = document.getElementById('retry-btn');
+
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const questionCounter = document.getElementById('question-counter');
+            const quizFeedback = document.getElementById('quiz-feedback');
+            const progressBarInner = document.getElementById('progress-bar-inner');
+
+            const scoreText = document.getElementById('score-text');
+            const resultsSummary = document.getElementById('results-summary');
+
+            // Quiz State
+            let questionsForCurrentRound = [];
+            let currentQuestionIndex = 0;
+            let userAnswers = [];
+            const QUESTIONS_PER_ROUND = 5;
+
+            // --- Question Bank (50 Questions) ---
+            const allQuestions = [
+                { question: "Qual tecido é responsável por revestir superfícies e formar glândulas?", options: ["Conjuntivo", "Epitelial", "Muscular", "Nervoso"], correctAnswerIndex: 1 },
+                { question: "O sangue e os ossos são exemplos de qual tipo de tecido?", options: ["Conjuntivo", "Epitelial", "Adiposo", "Cartilaginoso"], correctAnswerIndex: 0 },
+                { question: "A contratilidade é a principal característica de qual tecido?", options: ["Nervoso", "Conjuntivo", "Muscular", "Epitelial"], correctAnswerIndex: 2 },
+                { question: "Neurônios e células da glia são as células principais de qual tecido?", options: ["Muscular Liso", "Ósseo", "Epitelial Glandular", "Nervoso"], correctAnswerIndex: 3 },
+                { question: "Qual tipo de tecido conjuntivo armazena gordura?", options: ["Ósseo", "Sanguíneo", "Adiposo", "Cartilaginoso"], correctAnswerIndex: 2 },
+                { question: "O tecido muscular cardíaco é caracterizado por ser:", options: ["Estriado e voluntário", "Liso e involuntário", "Estriado e involuntário", "Liso e voluntário"], correctAnswerIndex: 2 },
+                { question: "As fibras de colágeno, elásticas e reticulares são componentes da matriz de qual tecido?", options: ["Epitelial", "Muscular", "Nervoso", "Conjuntivo"], correctAnswerIndex: 3 },
+                { question: "Qual tecido forma o revestimento interno dos vasos sanguíneos (endotélio)?", options: ["Epitelial Simples Pavimentoso", "Epitelial Estratificado Cúbico", "Muscular Liso", "Conjuntivo Denso"], correctAnswerIndex: 0 },
+                { question: "A principal função dos astrócitos, um tipo de célula da glia, é:", options: ["Produzir mielina", "Fagocitose", "Sustentação e nutrição dos neurônios", "Contração muscular"], correctAnswerIndex: 2 },
+                { question: "O tecido que forma os tendões e ligamentos é o:", options: ["Conjuntivo Frouxo", "Conjuntivo Denso Modelado", "Muscular Esquelético", "Cartilaginoso Hialino"], correctAnswerIndex: 1 },
+                { question: "As células caliciformes, encontradas no epitélio do intestino e trato respiratório, produzem:", options: ["Ácido clorídrico", "Hormônios", "Muco", "Enzimas digestivas"], correctAnswerIndex: 2 },
+                { question: "Qual dos seguintes não é um tipo de tecido conjuntivo?", options: ["Sangue", "Osso", "Epiderme", "Cartilagem"], correctAnswerIndex: 2 },
+                { question: "O pericôndrio é uma camada de tecido conjuntivo que reveste qual estrutura?", options: ["Ossos", "Músculos", "Cartilagens", "Nervos"], correctAnswerIndex: 2 },
+                { question: "A transmissão de impulsos nervosos é a função primária do tecido:", options: ["Epitelial", "Conjuntivo", "Muscular", "Nervoso"], correctAnswerIndex: 3 },
+                { question: "O tecido muscular liso pode ser encontrado em qual dos seguintes locais?", options: ["Coração", "Músculos bíceps e tríceps", "Parede do estômago e intestino", "Diafragma"], correctAnswerIndex: 2 },
+                { question: "As plaquetas (trombócitos) são fragmentos celulares presentes no sangue com função de:", options: ["Transporte de oxigênio", "Defesa imunológica", "Coagulação sanguínea", "Produção de anticorpos"], correctAnswerIndex: 2 },
+                { question: "Um epitélio com várias camadas de células é classificado como:", options: ["Simples", "Estratificado", "Pseudoestratificado", "De transição"], correctAnswerIndex: 1 },
+                { question: "Fibroblastos são as células mais comuns em qual tecido?", options: ["Tecido Nervoso", "Tecido Muscular", "Tecido Epitelial", "Tecido Conjuntivo"], correctAnswerIndex: 3 },
+                { question: "Qual tipo de cartilagem é encontrada nos discos intervertebrais e na sínfise púbica?", options: ["Hialina", "Elástica", "Fibrosa", "Adiposa"], correctAnswerIndex: 2 },
+                { question: "A bainha de mielina que envolve alguns axônios é produzida por quais células no sistema nervoso central?", options: ["Astrócitos", "Micróglia", "Células de Schwann", "Oligodendrócitos"], correctAnswerIndex: 3 },
+                { question: "O epitélio de transição, capaz de se distender, é encontrado principalmente:", options: ["Na pele", "No sistema respiratório", "No sistema urinário (bexiga)", "No sistema digestório"], correctAnswerIndex: 2 },
+                { question: "A matriz óssea é rica em qual sal mineral?", options: ["Cloreto de sódio", "Fosfato de cálcio", "Sulfato de magnésio", "Bicarbonato de potássio"], correctAnswerIndex: 1 },
+                { question: "Qual é a unidade funcional e estrutural do tecido muscular estriado esquelético?", options: ["Neurônio", "Sarcômero", "Nefrón", "Osteócito"], correctAnswerIndex: 1 },
+                { question: "Mastócitos, células do tecido conjuntivo, liberam histamina em reações:", options: ["De coagulação", "De contração", "Alérgicas e inflamatórias", "Nervosas"], correctAnswerIndex: 2 },
+                { question: "As glândulas sebáceas da pele são um exemplo de glândula:", options: ["Endócrina", "Exócrina Holócrina", "Exócrina Merócrina", "Mista"], correctAnswerIndex: 1 },
+                { question: "Qual tecido é avascular, ou seja, não possui vasos sanguíneos próprios?", options: ["Tecido Ósseo", "Tecido Muscular", "Tecido Epitelial", "Tecido Adiposo"], correctAnswerIndex: 2 },
+                { question: "A capacidade de responder a estímulos é chamada de:", options: ["Contratilidade", "Elasticidade", "Excitabilidade", "Condutividade"], correctAnswerIndex: 2 },
+                { question: "O plasma é a matriz extracelular de qual tecido?", options: ["Ósseo", "Adiposo", "Sanguíneo", "Cartilaginoso"], correctAnswerIndex: 2 },
+                { question: "O tecido que forma a derme da pele é principalmente:", options: ["Epitelial", "Conjuntivo", "Muscular", "Adiposo"], correctAnswerIndex: 1 },
+                { question: "As junções comunicantes (gap junctions) são importantes para a sincronização das contrações no tecido:", options: ["Muscular esquelético", "Muscular liso", "Muscular cardíaco", "Nervoso"], correctAnswerIndex: 2 },
+                { question: "A hematopoese, processo de formação das células sanguíneas, ocorre no(a):", options: ["Fígado", "Baço", "Medula óssea vermelha", "Pâncreas"], correctAnswerIndex: 2 },
+                { question: "Qual tipo de epitélio parece ter várias camadas, mas todas as células tocam a lâmina basal?", options: ["Estratificado", "Simples", "De transição", "Pseudoestratificado"], correctAnswerIndex: 3 },
+                { question: "Os macrófagos são células de defesa com alta capacidade de:", options: ["Produzir fibras", "Armazenar gordura", "Fagocitose", "Conduzir impulsos"], correctAnswerIndex: 2 },
+                { question: "A cartilagem elástica é encontrada em qual estrutura?", options: ["Traqueia", "Epiglote e orelha externa", "Joelho", "Discos intervertebrais"], correctAnswerIndex: 1 },
+                { question: "O espaço entre um neurônio e a célula seguinte é chamado de:", options: ["Axônio", "Dendrito", "Fenda sináptica", "Corpo celular"], correctAnswerIndex: 2 },
+                { question: "Qual tecido forma o estroma (armação de sustentação) de órgãos como o baço e linfonodos?", options: ["Conjuntivo Denso", "Conjuntivo Adiposo", "Conjuntivo Reticular", "Conjuntivo Elástico"], correctAnswerIndex: 2 },
+                { question: "A queratina é uma proteína impermeabilizante encontrada em abundância no tecido:", options: ["Muscular", "Nervoso", "Epitelial da pele", "Conjuntivo ósseo"], correctAnswerIndex: 2 },
+                { question: "Os osteoclastos são células do tecido ósseo responsáveis pela:", options: ["Produção de matriz óssea", "Reabsorção óssea", "Manutenção dos ossos", "Nutrição óssea"], correctAnswerIndex: 1 },
+                { question: "A principal diferença entre tecido muscular esquelético e cardíaco é:", options: ["A presença de estrias", "O controle voluntário vs. involuntário", "A capacidade de contração", "A cor do tecido"], correctAnswerIndex: 1 },
+                { question: "As células de Schwann têm função semelhante a qual célula do SNC?", options: ["Astrócito", "Micróglia", "Oligodendrócito", "Ependimária"], correctAnswerIndex: 2 },
+                { question: "Glândulas que liberam seus produtos diretamente na corrente sanguínea são chamadas de:", options: ["Exócrinas", "Apócrinas", "Holócrinas", "Endócrinas"], correctAnswerIndex: 3 },
+                { question: "O tecido conjuntivo frouxo é caracterizado por:", options: ["Predominância de fibras sobre as células", "Abundância de matriz mineralizada", "Equilíbrio entre células, fibras e substância fundamental", "Ausência de vasos sanguíneos"], correctAnswerIndex: 2 },
+                { question: "A regeneração do tecido muscular esquelético é limitada e feita por qual tipo de célula?", options: ["Fibroblastos", "Células satélite", "Miócitos", "Células-tronco mesenquimais"], correctAnswerIndex: 1 },
+                { question: "Os nódulos de Ranvier são interrupções na bainha de mielina que servem para:", options: ["Nutrir o axônio", "Acelerar o impulso nervoso (condução saltatória)", "Proteger o neurônio", "Conectar neurônios"], correctAnswerIndex: 1 },
+                { question: "Qual dos seguintes é um glicosaminoglicano importante na matriz do tecido conjuntivo?", options: ["Colágeno", "Elastina", "Ácido hialurônico", "Queratina"], correctAnswerIndex: 2 },
+                { question: "Microvilosidades são especializações da membrana apical de células epiteliais que servem para:", options: ["Aumentar a superfície de absorção", "Mover partículas (propulsão)", "Aumentar a adesão celular", "Secretar substâncias"], correctAnswerIndex: 0 },
+                { question: "O tecido adiposo marrom, mais comum em recém-nascidos, tem como principal função:", options: ["Armazenar energia", "Produção de calor (termogênese)", "Sustentação", "Produção de hormônios"], correctAnswerIndex: 1 },
+                { question: "A substância cinzenta do sistema nervoso é composta principalmente por:", options: ["Axônios mielinizados", "Corpos celulares de neurônios e células da glia", "Fibras de colágeno", "Líquido cefalorraquidiano"], correctAnswerIndex: 1 },
+                { question: "Os canais de Havers são estruturas encontradas no tecido:", options: ["Cartilaginoso", "Ósseo compacto", "Muscular cardíaco", "Ósseo esponjoso"], correctAnswerIndex: 1 },
+                { question: "Qual tecido muscular não possui estrias transversais?", options: ["Esquelético", "Cardíaco", "Liso", "Estriado visceral"], correctAnswerIndex: 2 }
+            ];
+
+            // --- Quiz Logic ---
+            function startQuiz() {
+                const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+                questionsForCurrentRound = shuffled.slice(0, QUESTIONS_PER_ROUND);
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                showScreen('quiz');
+                displayQuestion();
+            }
+
+            function displayQuestion() {
+                quizFeedback.classList.add('hidden');
+                const question = questionsForCurrentRound[currentQuestionIndex];
+                questionCounter.textContent = `Pergunta ${currentQuestionIndex + 1} de ${questionsForCurrentRound.length}`;
+                questionText.textContent = question.question;
+                optionsContainer.innerHTML = '';
+                const progress = ((currentQuestionIndex) / questionsForCurrentRound.length) * 100;
+                progressBarInner.style.width = `${progress}%`;
+                question.options.forEach((option, index) => {
+                    const optionElement = document.createElement('label');
+                    optionElement.className = 'quiz-option flex items-center p-3 border rounded-lg cursor-pointer transition-colors';
+                    optionElement.innerHTML = `
+                        <input type="radio" name="option" value="${index}" class="mr-3">
+                        <span>${option}</span>
+                    `;
+                    optionElement.addEventListener('click', () => {
+                        document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+                        optionElement.classList.add('selected');
+                    });
+                    optionsContainer.appendChild(optionElement);
+                });
+                if (currentQuestionIndex === questionsForCurrentRound.length - 1) {
+                    nextBtn.textContent = 'Finalizar Quiz';
+                } else {
+                    nextBtn.textContent = 'Próxima Pergunta';
+                }
+            }
+
+            function handleNextQuestion() {
+                const selectedOption = document.querySelector('input[name="option"]:checked');
+                if (!selectedOption) {
+                    quizFeedback.classList.remove('hidden');
+                    return;
+                }
+                userAnswers.push(parseInt(selectedOption.value));
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questionsForCurrentRound.length) {
+                    displayQuestion();
+                } else {
+                    showResults();
+                }
+            }
+
+            function showResults() {
+                let score = 0;
+                resultsSummary.innerHTML = '';
+                progressBarInner.style.width = `100%`;
+                questionsForCurrentRound.forEach((question, index) => {
+                    const userAnswerIndex = userAnswers[index];
+                    const correctAnswerIndex = question.correctAnswerIndex;
+                    const isCorrect = userAnswerIndex === correctAnswerIndex;
+                    if (isCorrect) {
+                        score++;
+                    }
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'p-3 border rounded-lg';
+                    resultItem.innerHTML = `
+                        <p class="font-semibold">${index + 1}. ${question.question}</p>
+                        <p class="mt-2 text-sm ${isCorrect ? 'correct-answer' : 'incorrect-answer'} p-2 rounded">
+                            Sua resposta: ${question.options[userAnswerIndex]} ${isCorrect ? '✔' : '✖'}
+                        </p>
+                        ${!isCorrect ? `
+                        <p class="mt-1 text-sm correct-answer p-2 rounded">
+                            Resposta correta: ${question.options[correctAnswerIndex]}
+                        </p>` : ''}
+                    `;
+                    resultsSummary.appendChild(resultItem);
+                });
+                scoreText.textContent = `Você acertou ${score} de ${questionsForCurrentRound.length} perguntas!`;
+                if (score / questionsForCurrentRound.length >= 0.6) {
+                    scoreText.style.color = '#16a34a';
+                } else {
+                    scoreText.st
