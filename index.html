@@ -67,10 +67,13 @@
 
     </div>
 
+    <!-- CORREÇÃO: O script foi movido para o final do body. -->
+    <!-- Isso garante que todo o HTML acima seja carregado antes que o JavaScript tente acessá-lo, -->
+    <!-- resolvendo problemas de timing em diferentes sites. -->
     <script>
-        // CORREÇÃO: Adicionado um event listener para garantir que o DOM esteja totalmente carregado antes de executar o script.
-        // Isso evita erros onde o script tenta encontrar elementos (como botões) que ainda não foram renderizados na página.
-        window.addEventListener('DOMContentLoaded', () => {
+        // CORREÇÃO: O código foi envolvido em uma IIFE (Immediately Invoked Function Expression).
+        // Isso cria um escopo privado e previne conflitos com outros scripts do seu site.
+        (function() {
             // DOM Elements
             const startScreen = document.getElementById('start-screen');
             const quizScreen = document.getElementById('quiz-screen');
@@ -228,7 +231,4 @@
                     resultsSummary.appendChild(resultItem);
                 });
                 scoreText.textContent = `Você acertou ${score} de ${questionsForCurrentRound.length} perguntas!`;
-                if (score / questionsForCurrentRound.length >= 0.6) {
-                    scoreText.style.color = '#16a34a';
-                } else {
-                    scoreText.st
+                if (score / questionsForCurrentRound.
