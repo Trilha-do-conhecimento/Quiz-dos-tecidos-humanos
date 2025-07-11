@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz: Tecidos Humanos</title>
-    <!-- Carregando o Tailwind CSS a partir de uma CDN confiável -->
+    <!-- Carregando o Tailwind CSS a partir de uma CDN (link da internet) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carregando a fonte Inter do Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- O CSS (estilo) está aqui dentro da tag <style> para evitar problemas com arquivos separados -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -68,7 +70,10 @@
 
     </div>
 
+    <!-- O JavaScript está aqui no final do <body>. Isso garante que todo o HTML acima já exista -->
+    <!-- quando o script for executado, evitando erros. -->
     <script>
+        // Este bloco (function() { ... })(); protege o código de conflitos com outros scripts.
         (function() {
             // --- Question Bank (50 Questions) ---
             const allQuestions = [
@@ -123,11 +128,8 @@
                 { question: "Os canais de Havers são estruturas encontradas no tecido:", options: ["Cartilaginoso", "Ósseo compacto", "Muscular cardíaco", "Ósseo esponjoso"], correctAnswerIndex: 1 },
                 { question: "Qual tecido muscular não possui estrias transversais?", options: ["Esquelético", "Cardíaco", "Liso", "Estriado visceral"], correctAnswerIndex: 2 }
             ];
-
-            // O código principal só roda quando o DOM estiver pronto.
-            // Isso é garantido porque o script está no final do <body>.
             
-            // DOM Elements
+            // Selecionando os elementos do DOM
             const startScreen = document.getElementById('start-screen');
             const quizScreen = document.getElementById('quiz-screen');
             const resultsScreen = document.getElementById('results-screen');
@@ -142,7 +144,7 @@
             const scoreText = document.getElementById('score-text');
             const resultsSummary = document.getElementById('results-summary');
 
-            // Quiz State
+            // Estado do Quiz
             let questionsForCurrentRound = [];
             let currentQuestionIndex = 0;
             let userAnswers = [];
@@ -158,13 +160,13 @@
             }
 
             function displayQuestion() {
-                if(quizFeedback) quizFeedback.classList.add('hidden');
+                quizFeedback.classList.add('hidden');
                 const question = questionsForCurrentRound[currentQuestionIndex];
-                if(questionCounter) questionCounter.textContent = `Pergunta ${currentQuestionIndex + 1} de ${questionsForCurrentRound.length}`;
-                if(questionText) questionText.textContent = question.question;
-                if(optionsContainer) optionsContainer.innerHTML = '';
+                questionCounter.textContent = `Pergunta ${currentQuestionIndex + 1} de ${questionsForCurrentRound.length}`;
+                questionText.textContent = question.question;
+                optionsContainer.innerHTML = '';
                 const progress = ((currentQuestionIndex) / questionsForCurrentRound.length) * 100;
-                if(progressBarInner) progressBarInner.style.width = `${progress}%`;
+                progressBarInner.style.width = `${progress}%`;
                 question.options.forEach((option, index) => {
                     const optionElement = document.createElement('label');
                     optionElement.className = 'quiz-option flex items-center p-3 border rounded-lg cursor-pointer transition-colors';
@@ -176,17 +178,15 @@
                         document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
                         optionElement.classList.add('selected');
                     });
-                    if(optionsContainer) optionsContainer.appendChild(optionElement);
+                    optionsContainer.appendChild(optionElement);
                 });
-                if (nextBtn) {
-                    nextBtn.textContent = (currentQuestionIndex === questionsForCurrentRound.length - 1) ? 'Finalizar Quiz' : 'Próxima Pergunta';
-                }
+                nextBtn.textContent = (currentQuestionIndex === questionsForCurrentRound.length - 1) ? 'Finalizar Quiz' : 'Próxima Pergunta';
             }
 
             function handleNextQuestion() {
                 const selectedOption = document.querySelector('input[name="option"]:checked');
                 if (!selectedOption) {
-                    if(quizFeedback) quizFeedback.classList.remove('hidden');
+                    quizFeedback.classList.remove('hidden');
                     return;
                 }
                 userAnswers.push(parseInt(selectedOption.value));
@@ -200,8 +200,8 @@
 
             function showResults() {
                 let score = 0;
-                if(resultsSummary) resultsSummary.innerHTML = '';
-                if(progressBarInner) progressBarInner.style.width = `100%`;
+                resultsSummary.innerHTML = '';
+                progressBarInner.style.width = `100%`;
                 questionsForCurrentRound.forEach((question, index) => {
                     const userAnswerIndex = userAnswers[index];
                     const correctAnswerIndex = question.correctAnswerIndex;
@@ -219,12 +219,10 @@
                             Resposta correta: ${question.options[correctAnswerIndex]}
                         </p>` : ''}
                     `;
-                    if(resultsSummary) resultsSummary.appendChild(resultItem);
+                    resultsSummary.appendChild(resultItem);
                 });
-                if(scoreText) {
-                    scoreText.textContent = `Você acertou ${score} de ${questionsForCurrentRound.length} perguntas!`;
-                    scoreText.style.color = (score / questionsForCurrentRound.length >= 0.6) ? '#16a34a' : '#dc2626';
-                }
+                scoreText.textContent = `Você acertou ${score} de ${questionsForCurrentRound.length} perguntas!`;
+                scoreText.style.color = (score / questionsForCurrentRound.length >= 0.6) ? '#16a34a' : '#dc2626';
                 showScreen('results');
             }
             
