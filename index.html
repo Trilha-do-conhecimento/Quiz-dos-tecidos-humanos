@@ -226,4 +226,19 @@
                 showScreen('results');
             }
             
-            function showScreen(s
+            function showScreen(screenName) {
+                startScreen.classList.add('hidden');
+                quizScreen.classList.add('hidden');
+                resultsScreen.classList.add('hidden');
+                document.getElementById(`${screenName}-screen`).classList.remove('hidden');
+            }
+
+            // --- Adicionando os Event Listeners ---
+            startBtn.addEventListener('click', startQuiz);
+            nextBtn.addEventListener('click', handleNextQuestion);
+            retryBtn.addEventListener('click', startQuiz);
+        })();
+    </script>
+</body>
+</html>
+
